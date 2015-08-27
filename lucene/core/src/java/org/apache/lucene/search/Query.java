@@ -44,6 +44,8 @@ import org.apache.lucene.index.IndexReader;
 public abstract class Query implements Cloneable {
   private float boost = 1.0f;                     // query boost factor
 
+  private boolean useAltSimilarity = false;      // If set true, use the alternative implmentation of similarity
+
   /** Sets the boost for this query clause to <code>b</code>.  Documents
    * matching this clause will (in addition to the normal weightings) have
    * their score multiplied by <code>b</code>.
@@ -55,6 +57,10 @@ public abstract class Query implements Cloneable {
    * multiplied by <code>b</code>.   The boost is 1.0 by default.
    */
   public float getBoost() { return boost; }
+
+  public void setUseAltSimilarity(boolean x) { useAltSimilarity = x; }
+
+  public boolean getUseAltSimilaity() { return useAltSimilarity; }
 
   /** Prints a query to a string, with <code>field</code> assumed to be the 
    * default field and omitted.
@@ -99,7 +105,8 @@ public abstract class Query implements Cloneable {
 
   @Override
   public int hashCode() {
-    return Float.floatToIntBits(getBoost()) ^ getClass().hashCode();
+    int alt = getUseAltSimilaity() ? 1 : 0;
+    return ((Float.floatToIntBits(getBoost()) << 1) | alt) ^ getClass().hashCode();
   }
 
   @Override
@@ -112,6 +119,8 @@ public abstract class Query implements Cloneable {
       return false;
     Query other = (Query) obj;
     if (Float.floatToIntBits(boost) != Float.floatToIntBits(other.boost))
+      return false;
+    if (getUseAltSimilaity() != other.getUseAltSimilaity())
       return false;
     return true;
   }

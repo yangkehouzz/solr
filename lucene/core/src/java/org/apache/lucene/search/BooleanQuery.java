@@ -185,7 +185,10 @@ public class BooleanQuery extends Query implements Iterable<BooleanClause> {
         newQuery.add(clause);
       }
     }
-    return newQuery.build();
+    BooleanQuery q = newQuery.build();
+    if (getUseAltSimilaity())
+      q.setUseAltSimilarity(true);
+    return q;
   }
 
   @Override
@@ -195,6 +198,14 @@ public class BooleanQuery extends Query implements Iterable<BooleanClause> {
       query = rewriteNoScoring();
     }
     return new BooleanWeight(query, searcher, needsScores, disableCoord);
+  }
+
+  @Override
+  public void setUseAltSimilarity(boolean x) {
+    super.setUseAltSimilarity(x);
+    for (BooleanClause clause : clauses) {
+      clause.getQuery().setUseAltSimilarity(x);
+    }
   }
 
   @Override
@@ -220,7 +231,7 @@ public class BooleanQuery extends Query implements Iterable<BooleanClause> {
           query = new ConstantScoreQuery(query);
           query.setBoost(0);
         }
-
+        query.setUseAltSimilarity(this.getUseAltSimilaity());
         return query;
       }
     }
@@ -232,6 +243,7 @@ public class BooleanQuery extends Query implements Iterable<BooleanClause> {
     for (BooleanClause clause : this) {
       Query query = clause.getQuery();
       Query rewritten = query.rewrite(reader);
+      rewritten.setUseAltSimilarity(this.getUseAltSimilaity());
       if (rewritten != query) {
         actuallyRewritten = true;
       }

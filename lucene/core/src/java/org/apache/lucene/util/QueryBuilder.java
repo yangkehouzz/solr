@@ -52,13 +52,13 @@ import org.apache.lucene.search.TermQuery;
 public class QueryBuilder {
   private Analyzer analyzer;
   private boolean enablePositionIncrements = true;
-  
+
   /** Creates a new QueryBuilder using the given analyzer. */
   public QueryBuilder(Analyzer analyzer) {
     this.analyzer = analyzer;
   }
-  
-  /** 
+
+  /**
    * Creates a boolean query from the query text.
    * <p>
    * This is equivalent to {@code createBooleanQuery(field, queryText, Occur.SHOULD)}

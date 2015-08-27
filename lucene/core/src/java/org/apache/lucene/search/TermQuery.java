@@ -57,7 +57,8 @@ public class TermQuery extends Query {
       // checked with a real exception in TermQuery constructor
       assert termStates.hasOnlyRealTerms();
       this.termStates = termStates;
-      this.similarity = searcher.getSimilarity(needsScores);
+      this.similarity = getUseAltSimilaity() ?
+          searcher.getAltSimilarity(needsScores) : searcher.getSimilarity(needsScores);
 
       final CollectionStatistics collectionStats;
       final TermStatistics termStats;

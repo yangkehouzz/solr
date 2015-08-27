@@ -144,6 +144,7 @@ public class IndexSearcher {
   // the default Similarity
   private static final Similarity defaultSimilarity = new DefaultSimilarity();
 
+
   private QueryCache queryCache = DEFAULT_QUERY_CACHE;
   private QueryCachingPolicy queryCachingPolicy = DEFAULT_CACHING_POLICY;
 
@@ -192,6 +193,9 @@ public class IndexSearcher {
 
   /** The Similarity implementation used by this searcher. */
   private Similarity similarity = defaultSimilarity;
+
+  // The alternative similarity
+  private Similarity altSimilarity = defaultSimilarity;
 
   /** Creates a searcher searching the provided index. */
   public IndexSearcher(IndexReader r) {
@@ -333,6 +337,14 @@ public class IndexSearcher {
    *  has been set explicitely. */
   public Similarity getSimilarity(boolean needsScores) {
     return needsScores ? similarity : NON_SCORING_SIMILARITY;
+  }
+
+  public void setAltSimilarity(Similarity similarity) {
+    this.altSimilarity = similarity;
+  }
+
+  public Similarity getAltSimilarity(boolean needsScores) {
+    return needsScores ? altSimilarity : NON_SCORING_SIMILARITY;
   }
 
   /**

@@ -120,6 +120,12 @@ public class ExtendedDismaxQParser extends QParser {
      * If set to true, stopwords are removed from the query.
      */
     public static String STOPWORDS = "stopwords";
+
+
+    /**
+     * If set to true, use the alternative similarity
+     */
+    public static String ALT_SIM = "altSim";
   }
   
   private ExtendedDismaxConfiguration config;
@@ -211,6 +217,7 @@ public class ExtendedDismaxQParser extends QParser {
     // create a boosted query (scores multiplied by boosts)
     //
     Query topQuery = query.build();
+
     List<ValueSource> boosts = getMultiplicativeBoosts();
     if (boosts.size()>1) {
       ValueSource prod = new ProductFloatFunction(boosts.toArray(new ValueSource[boosts.size()]));
@@ -218,7 +225,10 @@ public class ExtendedDismaxQParser extends QParser {
     } else if (boosts.size() == 1) {
       topQuery = new BoostedQuery(topQuery, boosts.get(0));
     }
-    
+
+    // set using alternative similarity if instructed so
+    if (config.altSim)
+      topQuery.setUseAltSimilarity(true);
     return topQuery;
   }
   
@@ -1496,6 +1506,8 @@ public class ExtendedDismaxQParser extends QParser {
     protected String altQ;
     
     protected boolean lowercaseOperators;
+
+    protected boolean altSim;
     
     protected  String[] boostFuncs;
     
@@ -1532,8 +1544,10 @@ public class ExtendedDismaxQParser extends QParser {
 
       mmAutoRelax = solrParams.getBool(DMP.MM_AUTORELAX, false);
       
-      altQ = solrParams.get( DisMaxParams.ALTQ );
-      
+      altQ = solrParams.get(DisMaxParams.ALTQ);
+
+      altSim = solrParams.getBool(DMP.ALT_SIM, false);
+
       lowercaseOperators = solrParams.getBool(DMP.LOWERCASE_OPS, true);
       
       /* * * Boosting Query * * */

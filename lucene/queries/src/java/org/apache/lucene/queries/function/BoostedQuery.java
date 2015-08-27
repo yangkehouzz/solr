@@ -53,6 +53,12 @@ public class BoostedQuery extends Query {
   public ValueSource getValueSource() { return boostVal; }
 
   @Override
+  public void setUseAltSimilarity(boolean x) {
+    super.setUseAltSimilarity(x);
+    q.setUseAltSimilarity(x);
+  }
+
+  @Override
   public Query rewrite(IndexReader reader) throws IOException {
     Query newQ = q.rewrite(reader);
     if (newQ == q) return this;
