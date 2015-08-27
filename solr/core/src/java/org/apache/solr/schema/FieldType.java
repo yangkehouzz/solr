@@ -608,6 +608,43 @@ public abstract class FieldType extends FieldProperties {
   }
 
 
+  // The alternate similarity
+  /** @lucene.internal */
+  protected SimilarityFactory altSimilarityFactory;
+
+  /** @lucene.internal */
+  protected Similarity altSimilarity;
+
+  /**
+   * Gets the alternative Similarity used when scoring fields of this type
+   *
+   * <p>
+   * The default implementation returns null, which means this type
+   * has no custom similarity associated with it.
+   * </p>
+   *
+   * @lucene.internal
+   */
+  public Similarity getAltSimilarity() {
+    return altSimilarity;
+  }
+
+  /**
+   * Gets the factory for the alternative Similarity used when scoring fields of this type
+   *
+   * <p>
+   * The default implementation returns null, which means this type
+   * has no custom similarity factory associated with it.
+   * </p>
+   *
+   * @lucene.internal
+   */
+  public SimilarityFactory getAltSimilarityFactory() {
+    return altSimilarityFactory;
+  }
+
+
+
   /** Return the numeric type of this field, or null if this field is not a
    *  numeric field. */
   public org.apache.lucene.document.FieldType.NumericType getNumericType() {
@@ -622,7 +659,12 @@ public abstract class FieldType extends FieldProperties {
     this.similarityFactory = similarityFactory;
     this.similarity = similarityFactory.getSimilarity();
   }
-  
+
+  public void setAltSimilarity(SimilarityFactory similarityFactory) {
+    this.altSimilarityFactory = similarityFactory;
+    this.altSimilarity = similarityFactory.getSimilarity();
+  }
+
   /**
    * The postings format used for this field type
    */

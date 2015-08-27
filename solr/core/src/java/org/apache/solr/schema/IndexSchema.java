@@ -106,6 +106,7 @@ public class IndexSchema {
   public static final String REQUIRED = "required";
   public static final String SCHEMA = "schema";
   public static final String SIMILARITY = "similarity";
+  public static final String ALT_SIMILARITY = "altSimilarity";
   public static final String SLASH = "/";
   public static final String SOLR_QUERY_PARSER = "solrQueryParser";
   public static final String SOURCE = "source";
@@ -259,6 +260,7 @@ public class IndexSchema {
   public Collection<SchemaField> getRequiredFields() { return requiredFields; }
 
   protected Similarity similarity;
+  protected Similarity altSimilarity;
 
   /**
    * Returns the Similarity used for this index
@@ -270,13 +272,23 @@ public class IndexSchema {
     return similarity; 
   }
 
+  public Similarity getAltSimilarity() {
+    if (null == altSimilarity) {
+      altSimilarity = altSimilarityFactory.getSimilarity();
+    }
+    return altSimilarity;
+  }
+
   protected SimilarityFactory similarityFactory;
+  protected SimilarityFactory altSimilarityFactory;
   protected boolean isExplicitSimilarity = false;
+  protected boolean isExplicitAltSimilarity = false;
 
 
   /** Returns the SimilarityFactory that constructed the Similarity for this index */
   public SimilarityFactory getSimilarityFactory() { return similarityFactory; }
-  
+  public SimilarityFactory getAltSimilarityFactory() { return altSimilarityFactory; }
+
   /**
    * Returns the Analyzer used when indexing documents for this index
    *
@@ -449,7 +461,6 @@ public class IndexSchema {
 
   protected void readSchema(InputSource is) {
     String resourcePath = CloudUtil.unifiedResourcePath(loader) + resourceName;
-    log.info("Reading Solr Schema from " + resourcePath);
 
     try {
       // pass the config resource loader to avoid building an empty one for no reason:
@@ -480,6 +491,7 @@ public class IndexSchema {
         log.info(sb.toString());
       }
 
+
       //                      /schema/@version
       expression = stepsToPath(SCHEMA, AT + VERSION);
       version = schemaConf.getFloat(expression, 1.0f);
@@ -504,19 +516,45 @@ public class IndexSchema {
       } else {
         isExplicitSimilarity = true;
       }
-      if ( ! (similarityFactory instanceof SolrCoreAware)) {
-        // if the sim factory isn't SolrCoreAware (and hence schema aware), 
-        // then we are responsible for erroring if a field type is trying to specify a sim.
-        for (FieldType ft : fieldTypes.values()) {
-          if (null != ft.getSimilarity()) {
-            String msg = "FieldType '" + ft.getTypeName()
-                + "' is configured with a similarity, but the global similarity does not support it: " 
-                + similarityFactory.getClass();
-            log.error(msg);
-            throw new SolrException(ErrorCode.SERVER_ERROR, msg);
-          }
-        }
+//      if ( ! (similarityFactory instanceof SolrCoreAware)) {
+//        // if the sim factory isn't SolrCoreAware (and hence schema aware),
+//        // then we are responsible for erroring if a field type is trying to specify a sim.
+//        for (FieldType ft : fieldTypes.values()) {
+//          if (null != ft.getSimilarity()) {
+//            String msg = "FieldType '" + ft.getTypeName()
+//                + "' is configured with a similarity, but the global similarity does not support it: "
+//                + similarityFactory.getClass();
+//            log.error(msg);
+//            throw new SolrException(ErrorCode.SERVER_ERROR, msg);
+//          }
+//        }
+//      }
+
+      // alternative similarity
+      expression = stepsToPath(SCHEMA, ALT_SIMILARITY); //   /schema/similarity
+      node = (Node) xpath.evaluate(expression, document, XPathConstants.NODE);
+      altSimilarityFactory = readSimilarity(loader, node);
+      if (altSimilarityFactory == null) {
+        altSimilarityFactory = new DefaultSimilarityFactory();
+        final NamedList similarityParams = new NamedList();
+        Version luceneVersion = getDefaultLuceneMatchVersion();
+        altSimilarityFactory.init(SolrParams.toSolrParams(similarityParams));
+      } else {
+        isExplicitAltSimilarity = true;
       }
+//      if ( ! (altSimilarityFactory instanceof SolrCoreAware)) {
+//        // if the sim factory isn't SolrCoreAware (and hence schema aware),
+//        // then we are responsible for erroring if a field type is trying to specify a sim.
+//        for (FieldType ft : fieldTypes.values()) {
+//          if (null != ft.getAltSimilarity()) {
+//            String msg = "FieldType '" + ft.getTypeName()
+//                + "' is configured with a altSimilarity, but the global altSimilarity does not support it: "
+//                + altSimilarityFactory.getClass();
+//            log.error(msg);
+//            throw new SolrException(ErrorCode.SERVER_ERROR, msg);
+//          }
+//        }
+//      }
 
       //                      /schema/defaultSearchField/text()
       expression = stepsToPath(SCHEMA, DEFAULT_SEARCH_FIELD, TEXT_FUNCTION);
@@ -994,7 +1032,6 @@ public class IndexSchema {
     }
   }
 
-
   public static abstract class DynamicReplacement implements Comparable<DynamicReplacement> {
     abstract protected static class DynamicPattern {
       protected final String regex;
@@ -1386,6 +1423,9 @@ public class IndexSchema {
     }
     if (isExplicitSimilarity) {
       topLevel.add(SIMILARITY, similarityFactory.getNamedPropertyValues());
+    }
+    if (isExplicitAltSimilarity) {
+      topLevel.add(ALT_SIMILARITY, altSimilarityFactory.getNamedPropertyValues());
     }
     List<SimpleOrderedMap<Object>> fieldTypeProperties = new ArrayList<>();
     SortedMap<String,FieldType> sortedFieldTypes = new TreeMap<>(fieldTypes);

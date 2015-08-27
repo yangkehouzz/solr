@@ -110,7 +110,13 @@ public final class FieldTypePluginLoader
     if (null != simFactory) {
       ft.setSimilarity(simFactory);
     }
-    
+    expression = "./alt_similarity";
+    anode = (Node)xpath.evaluate(expression, node, XPathConstants.NODE);
+    SimilarityFactory altSimFactory = IndexSchema.readSimilarity(loader, anode);
+    if (null != simFactory) {
+      ft.setAltSimilarity(simFactory);
+    }
+
     if (null == queryAnalyzer) {
       queryAnalyzer = analyzer;
       ft.setIsExplicitQueryAnalyzer(false);
