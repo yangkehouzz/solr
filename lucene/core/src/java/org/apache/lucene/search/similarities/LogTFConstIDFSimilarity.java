@@ -17,7 +17,7 @@ package org.apache.lucene.search.similarities;
  * limitations under the License.
  */
 
-import org.apache.lucene.search.similarities.DefaultSimilarity;
+    import org.apache.lucene.search.similarities.DefaultSimilarity;
 
 // A very simple similarity where we use log for TF and const for IDF
 
